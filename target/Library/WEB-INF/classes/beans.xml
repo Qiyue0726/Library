@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	        http://www.springframework.org/schema/beans/spring-beans.xsd
+	         http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd"
+       default-lazy-init="true">
+
+    <!-- 配置数据源 -->
+    <bean id="dataSource"
+          class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="driverClass" value="com.mysql.jdbc.Driver" />
+        <property name="jdbcUrl" value="jdbc:mysql://localhost:3306/db_book" />
+        <property name="user" value="root" />
+        <property name="password" value="3333" />
+        <!--连接池中保留的最小连接数。-->
+        <property name="minPoolSize" value="10" />
+        <!--连接池中保留的最大连接数。Default: 15 -->
+
+        <property name="maxPoolSize" value="100" />
+        <!--最大空闲时间,1800秒内未使用则连接被丢弃。若为0则永不丢弃。Default: 0 -->
+
+        <property name="maxIdleTime" value="1800" />
+        <!--当连接池中的连接耗尽的时候c3p0一次同时获取的连接数。Default: 3 -->
+
+        <property name="acquireIncrement" value="3" />
+        <!--最大的Statements条数 -->
+        <property name="maxStatements" value="1000" />
+        <!--初始化10条连接 -->
+        <property name="initialPoolSize" value="10" />
+        <!--定义在从数据库获取新连接失败后重复尝试的次数。Default: 30 -->
+        <property name="acquireRetryAttempts" value="30" />
+
+        <!--每隔60秒发一次心跳信号到数据库，以保持连接的活性 -->
+        <property name="idleConnectionTestPeriod" value="60" />
+    </bean>
+
+    <!-- 定义Hibernate的SessionFactory，SessionFactory需要依赖数据源，注入dataSource -->
+    <bean id="sessionFactory"
+          class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource"></property>
+        <property name="hibernateProperties">
+            <props>
+                <!-- 指定Hibernate的连接方言 -->
+                <prop key="hibernate.dialect">
+                    org.hibernate.dialect.MySQL5Dialect
+                </prop>
+                <!--是否根据Hibernate映射创建数据表 -->
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">true</prop>
+            </props>
+        </property>
+        <!-- annotatedClasses用来列出全部持久化类 -->
+        <property name="annotatedClasses">
+            <list>
+                <value>pojo.Book</value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- 配置事务管理器 -->
+    <bean id="transactionManager"
+          class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+        <property name="sessionFactory" ref="sessionFactory"></property>
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <bean id="tx" class="aop.transactionAspect">
+        <property name="transactionManager" ref="transactionManager"></property>
+    </bean>
+
+    <!-- 配置事务增强切面 -->
+    <aop:config>
+    <aop:pointcut id="tx_pointcut" expression="execution(* service.impl.*.*(..))"/>
+    <aop:aspect id="tx_aspect" ref="tx">
+        <aop:around method="tx" pointcut-ref="tx_pointcut"></aop:around>
+    </aop:aspect>
+</aop:config>
+
+
+
+
+
+    <bean id="book" class="pojo.Book"></bean>
+
+    <bean id="showDao" class="dao.impl.showBookDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"></property>
+    </bean>
+    <bean id="addDao" class="dao.impl.addBookDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"></property>
+        <property name="book" ref="book"></property>
+    </bean>
+    <bean id="deleteDao" class="dao.impl.deleteBookDaoImpl">
+        <property name="sessionFactory" ref="sessionFactory"></property>
+    </bean>
+
+    <bean id="showService" class="service.impl.showBookServiceImpl">
+        <property name="showBookDao" ref="showDao"></property>
+    </bean>
+    <bean id="addService" class="service.impl.addBookServiceImpl">
+        <property name="addBookDao" ref="addDao"></property>
+    </bean>
+    <bean id="deleteService" class="service.impl.deleteBookServiceImpl">
+        <property name="deleteBookDao" ref="deleteDao"></property>
+    </bean>
+
+    <bean id="show" class="action.showBook">
+        <property name="show_book" ref="showService"></property>
+    </bean>
+    <bean id="add" class="action.addBook">
+        <property name="add_book" ref="addService"></property>
+    </bean>
+    <bean id="delete" class="action.bookDelete">
+        <property name="delete_book" ref="deleteService"></property>
+    </bean>
+
+
+</beans>

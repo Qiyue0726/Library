@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE struts PUBLIC
+        "-//Apache Software Foundation//DTD Struts Configuration 2.5//EN"
+        "http://struts.apache.org/dtds/struts-2.5.dtd">
+
+<struts>
+
+    <constant name="struts.enable.DynamicMethodInvocation" value="true" />
+    <constant name="struts.devMode" value="false" />
+
+    <package name="action" namespace="/" extends="struts-default">
+        <!-- 设置允许访问任意方法 -->
+        <global-allowed-methods>regex:.*</global-allowed-methods>
+
+        <action name="login" class="action.loginAction">
+            <result name="success" type="redirectAction">showBook</result>
+            <result name="error">/WEB-INF/content/login.jsp</result>
+        </action>
+
+        <action name="showBook" class="show" >
+            <result name="success">/WEB-INF/content/show_book.jsp</result>
+        </action>
+
+        <action name="bookDelete" class="delete">
+            <result name="success" type="redirectAction">showBook</result>
+        </action>
+
+        <action name="toAdd" class="action.toAdd">
+            <result name="success" >/WEB-INF/content/add_book.jsp</result>
+        </action>
+
+        <action name="addBook" class="add">
+            <result name="success" type="redirectAction">showBook</result>
+        </action>
+
+    </package>
+
+</struts>
